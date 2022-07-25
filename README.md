@@ -8,6 +8,10 @@ Author:Sudemqaq mail@szhcloud.cn
 
 ##版本迭代更新日志
 
+##Version:3.1.beta
+- 修复了一些功能性的bug
+- 支持TLS 协议对客户端与服务端加密
+
 ##Version:3.0
 - 迟到的更新,全面重构的开源版本
 - 基于最新内核 0.43.0
