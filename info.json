@@ -1,0 +1,9 @@
+{
+  "title": "frp客户端管理器",
+  "name": "frpc",
+  "ps": "内网穿透插件frp的客户端管理插件,全面重构并开源的新版本",
+  "versions": "3.1.beta",
+  "checks": "/www/server/panel/plugin/frpc",
+  "author": "IW3C",
+  "home": "https://www.atonal.cn"
+}

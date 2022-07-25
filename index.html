@@ -1,0 +1,461 @@
+<style>
+    .plugin_page{
+        margin-left: 16px;
+    }
+    .text-label{
+        position: relative;
+        top:10px;
+    }
+</style>
+<link rel="stylesheet" href="https://cdn.iw3c.com.cn/font_icon/font_awesome/4.7.0/css/font-awesome.min.css">
+<div class="bt-form">
+    <div class="bt-w-main">
+        <!--菜单部分-->
+        <div class="bt-w-menu">
+            <p class="bgw" onclick="frpc.switch_page('index')">服务端列表</p>
+            <p  onclick="frpc.switch_page('proxy')">代理配置</p>
+            <p  onclick="frpc.switch_page('config')">全局配置</p>
+            <p  onclick="frpc.switch_page('about')">关于</p>
+        </div>
+        <!--内容部分-->
+        <div class="bt-w-con pd15">
+
+            <div class="plugin_body">
+                <div class="plugin_page" id="page_index"  style="display: none">
+                    <div class="row" style="height: 60px">
+                        <div class="col-sm-1 text-label" style="text-align:right;">FRP内核</div>
+                        <div class="col-sm-3"><select id="core_frpc_version" class="form-control"></select></div>
+                         <div class="col-sm-4">
+                            <button class="btn btn-default" onclick="frpc.button_update_frpc_version()" style="margin-right:16px">切换内核</button>
+                            <button class="btn btn-default" onclick="frpc.button_update_frpc_version_cache()">刷新列表</button>
+                         </div>
+                         <div class="col-sm-3" style="text-align:left">
+                            <button class="btn btn-success" onclick="frpc.button_add_client()"><i class="fa fa-plus-square-o" style="margin-right:4px"></i>新增服务端</button>
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead><th>Id</th><th>服务端名称</th><th>服务器IP</th><th>端口号</th><th>开机自启动</th><th>状态</th><th>操作</th></thead>
+                        <tbody id="frpc_clients_table"></tbody>
+                    </table>
+                </div>
+                <div class="plugin_page" id="page_proxy"  style="display: none">
+                    <div class="row" style="height: 60px">
+                        <div class="col-sm-1 text-label" style="text-align:right">服务端</div>
+                        <div class="col-sm-3"><select id="frpc_clients_list" onchange="frpc.button_onchange_client()" class="form-control" ></select></div>
+                        <div class="col-sm-1 text-label" style="text-align:right">IP:</div>
+                        <div class="col-sm-2"><input id="frpc_client_ip" readonly class="form-control" style="font-size: x-small"></div>
+                        <div class="col-sm-1 text-label" style="text-align:right">运行状态:</div>
+                        <div class="col-sm-2 text-label" id="frpc_client_status"></div>
+                        <div class="col-sm-2 " >
+                            <button class="btn btn-success" onclick="frpc.button_add_proxy()"><i class="fa fa-plus-square-o" style="margin-right:4px"></i>新增代理</button>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 16px">
+                         <table class="table">
+                            <thead><th>Id</th><th>代理名称</th><th>代理类型</th><th>本地ip</th><th>本地端口</th><th>服务器端口</th><th>操作</th></thead>
+                             <tbody id="table_proxy_list"></tbody>
+                         </table>
+                    </table>
+                    </div>
+                </div>
+                <div class="plugin_page" id="page_config" style="display: none">
+                    <from class="form-horizontal" role="from">
+                         <div class="form-group" style="height: 48px">
+                              <div class="col-sm-1 text-label" >
+                                 巡检方式
+                              </div>
+                             <div class="col-sm-4">
+                                <select type="text" class="form-control" id="config_watch_type" onchange="frpc.button_config_update('watch_type')">
+                                    <option value="crontab">计划任务模式</option>
+                                    <option value="thread">异步进程模式</option>
+                                </select>
+                             </div>
+                             <div class="col-sm-7" style="position: relative;top:-6px">
+                                 配置frpc 异步巡检线程运行状态的方式<br/>
+                                 选择计划任务模式,系统会自动新增一个每分钟一次的定时任务(低性能需求,但响应可能稍有延迟)<br/>
+                                 选自异步进程模式,系统会启动一个异步检查运行状态的进程,秒级别检测(高性能需求,掉线瞬间拉起)<br/>
+                             </div>
+                         </div>
+
+                        <div class="form-group" style="height: 48px">
+                              <div class="col-sm-1 text-label" >
+                                 掉线报警
+                              </div>
+                             <div class="col-sm-4">
+                                <select type="text" class="form-control" id="config_msg_warning" onchange="frpc.button_config_update('msg_warning')">
+                                    <option value="true">开启</option>
+                                    <option value="false">关闭</option>
+                                </select>
+                             </div>
+                             <div class="col-sm-7" style="position: relative;top:4px">
+                                 开启本功能需要在堡塔面板的消息通道中启用邮件通道,并配置好收件人信息
+                             </div>
+                         </div>
+
+                        <div class="form-group" style="height: 48px">
+                              <div class="col-sm-1 text-label" >
+                                 开机通知
+                              </div>
+                             <div class="col-sm-4">
+                                <select type="text" class="form-control" id="config_msg_poweron" onchange="frpc.button_config_update('msg_poweron')">
+                                    <option value="true">开启</option>
+                                    <option value="false">关闭</option>
+                                </select>
+                             </div>
+                             <div class="col-sm-7" style="position: relative;top:4px">
+                                 启用本功能后,当服务器开机时,会通过邮件通道发送消息通知
+                             </div>
+                         </div>
+
+
+                        <div class="form-group" style="height: 48px">
+                              <div class="col-sm-1 text-label" >
+                                 配置备份
+                              </div>
+                             <div class="col-sm-4">
+                                 <button class="btn btn-default"  style="margin-right: 16px">导出配置</button>
+                                 <button class="btn btn-default"  style="margin-right: 16px">导入配置</button>
+                             </div>
+                             <div class="col-sm-7" style="position: relative;top:4px">
+                                 开发中,敬请期待...
+                             </div>
+                         </div>
+
+
+
+                    </from>
+                </div>
+                <div class="plugin_page" id="page_about" style="display: none">
+                    <div class="header-help" style="height: 28px">
+                        <p>
+                            本插件由基于 <a class="btlink" target="_blank"  href="https://upyun.com">又拍云CDN</a> 的 <a class="btlink" target="_blank" href="https://cdn.iw3c.com.cn">cdn.iw3c.com.cn </a> 提供镜像加速服务,
+                            <a class="btlink" target="_blank" href="https://blog.szhcloud.cn/blog/donate">感谢您的支持</a>
+                        </p>
+                    </div>
+                    <hr/>
+                    <div class="page-content" style="position:relative;font-size: 18px;left: -80px">
+                        <div class="row" style="margin-bottom: 16px;height: 30px">
+                            <div class="col-sm-6" style="text-align: right">插件名称:</div>
+                            <div class="col-sm-6" style="text-align: left">frpc 客户端管理器</div>
+                        </div>
+                        <div class="row" style="margin-bottom: 16px;height: 30px">
+                            <div class="col-sm-6" style="text-align: right">程序版本:</div>
+                            <div class="col-sm-6" style="text-align: left"><span id="plugin_version"></span></div>
+                        </div>
+                        <div class="row" style="margin-bottom: 16px;height: 30px">
+                            <div class="col-sm-6" style="text-align: right">发布地址:</div>
+                            <div class="col-sm-6" style="text-align: left"><a class="btlink" target="_blank" href="https://blog.szhcloud.cn/blog/2022/07/10/bt-frp-plugin-update/">宝塔面板 frp 插件更新啦</a></div>
+                        </div>
+                        <div class="row" style="margin-bottom: 16px;height: 30px">
+                            <div class="col-sm-6" style="text-align: right">作者邮箱:</div>
+                            <div class="col-sm-6" style="text-align: left">mail@szhcloud.cn</div>
+                        </div>
+
+                        <center>
+                            <a class="btn btn-success btn-sm" href="https://blog.szhcloud.cn/blog" target="_blank" title="去作者博客看看其他有趣的内容？">作者博客</a>
+                            <a class="btn btn-success btn-sm" href="https://url.app.atonal.cn/?s=frpc" target="_blank" title="去github Fork一下本项目？">开源地址</a>
+                            <a class="btn btn-success btn-sm" href="https://www.bt.cn/bbs/thread-32990-1-1.html" target="_blank" title="你可以在此处与大家一起讨论关于本插件的问题！">论坛讨论</a>
+                        </center>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--JS脚本部分，不要将JS脚本写在其它地方-->
+<script src="https://cdn.iw3c.com.cn/bt-plugin/ad.js"></script>
+<script type="text/javascript">
+
+    //定义窗口尺寸
+    $('.layui-layer-page').css({ 'width': '1100' });
+
+    //左测菜单切换效果
+    $(".bt-w-menu p").click(function () {
+        $(this).addClass('bgw').siblings().removeClass('bgw')
+    });
+
+
+
+    var frpc= {
+        pages:['index','proxy','config','about'],
+        loading:false,
+        layer:false,
+        clients:[],
+        proxy_client_id:'',
+        proxy_client:{},
+        switch_page:function (page){
+            console.log("switch to page [" + page + "]");
+            if(frpc.pages.indexOf(page) != -1) {
+                $('.plugin_page').hide();
+                $('#page_' + page).css('display','');
+                eval("frpc.show_page_" + page + "()");
+            }
+            else console.error("page [" + page + "] not found!");
+        },
+        show_page_index:function(){
+            // 查询受支持的frpc 的客户端信息列表
+            frpc.send_request('get_frpc_version_update','get',{},(res)=>{
+                var html = "";
+                res.data.forEach((version)=>{
+                    html = html + '<option value="'+version+'">' + version + '</option>';
+                })
+                $("#core_frpc_version").html(html);
+            });
+            frpc.send_request('get_frpc_version','get',{},(res)=>{
+                $('#core_frpc_version').val(res.data);
+            })
+            frpc.refresh_client_list();
+        },
+        show_page_proxy:function(){
+            var html = '';
+            console.log(frpc.clients);
+            frpc.clients.forEach((client)=>{
+                html = html + "<option value='"+client["client_id"]+"' uuid='"+client['uuid']+"' >" + client['name'] + "</option>";
+            })
+            $("#frpc_clients_list").html(html);
+            if(frpc.clients.length>0){
+                 $("#frpc_clients_list").val(frpc.clients[0]['client_id']);
+                 frpc.button_onchange_client();
+            }
+        },
+        show_page_config:function(){
+            frpc.send_request('get_global_config','get','',(res)=>{
+                $("#config_watch_type").val(res.data.watch_type);
+                $("#config_msg_poweron").val(res.data.msg_poweron)
+                $("#config_msg_warning").val(res.data.msg_warning)
+            })
+        },
+        show_page_about:function(){
+            frpc.send_request('get_app_version','get','',(res)=>{
+                $("#plugin_version").html(res.data);
+            })
+        },
+        // 新增客户端按钮
+        button_add_client:function(){
+            frpc.layer = layer.open({
+                type: 2,
+                area: ['700px', '500px'],
+                fixed: false,
+                title:'新增服务端',
+                content: '/frpc/static/client.html?mode=create'
+            })
+        },
+        // 清空当前版本的缓存的信息
+        button_update_frpc_version_cache:function(){
+             frpc.send_request('update_frpc_version_cache','get',{},(res)=>{
+                layer.msg('刷新frp云端版本数据列表成功',{icon:1});
+                frpc.show_page_index();
+            })
+        },
+        // 更新frpc 的内核版本
+        button_update_frpc_version:function(){
+            frpc.loading = layer.load();
+            frpc.send_request('update_frpc_version','get',{version:$("#core_frpc_version").val()},(res)=>{
+                var task_id = res.data;
+                frpc.check_install_status(task_id);
+            })
+        },
+        // 删除frpc 的服务端
+        button_delete_client:function(client_id){
+            frpc.send_request('delete_frpc_client','get',{'client_id':client_id},(res)=>{
+               layer.msg('删除服务端成功',{icon:1});
+               frpc.refresh_client_list();
+            })
+        },
+        button_detail_client:function(client_id){
+            frpc.layer = layer.open({
+                type: 2,
+                area: ['700px', '500px'],
+                fixed: false,
+                title:'配置服务端',
+                content: '/frpc/static/client.html?mode=detail&client_id=' + client_id
+            })
+        },
+        button_show_log:function(client_id){
+             frpc.layer = layer.open({
+                type: 2,
+                area: ['700px', '600px'],
+                fixed: false,
+                title:'查看日志',
+                content: '/frpc/static/log.html?client_id=' + client_id
+            })
+        },
+        button_add_proxy:function(){
+            if(!frpc.proxy_client_id) layer.msg('请先新增服务端配置',{icon:5});
+            else{
+                 frpc.layer = layer.open({
+                    type: 2,
+                    area: ['700px', '500px'],
+                    fixed: false,
+                    title:'新增客户端代理',
+                    content: '/frpc/static/proxy.html?mode=create&client_id=' + frpc.proxy_client_id
+                })
+            }
+        },
+        button_onchange_client:function(){
+            frpc.proxy_client_id = $('#frpc_clients_list').val();
+            for(var i=0;i<frpc.clients.length;i++){
+                var client = frpc.clients[i];
+                if(client.client_id == frpc.proxy_client_id) {
+                    frpc.proxy_client = client;
+                    break
+                }
+            }
+            $("#frpc_client_ip").val(frpc.find_config_list('server_addr',frpc.clients[i]['config']));
+            $("#frpc_client_status").html(frpc.format_process_status(frpc.clients[i]['is_running']) + '-' + frpc.format_connect_status(frpc.clients[i]['is_connect']));
+            frpc.refresh_proxy_list();
+        },
+        button_delete_proxy:function(dom){
+            var client_id = dom.getAttribute('client_id');
+            var proxy_id = dom.getAttribute('proxy_id');
+            frpc.send_request('delete_frpc_proxy','get',{'client_id':client_id,'proxy_id':proxy_id},(res)=>{
+                layer.msg('删除客户端代理成功',{icon:1});
+                frpc.button_onchange_client();
+            })
+        },
+        button_detail_proxy:function(dom){
+            var client_id = dom.getAttribute('client_id');
+            var proxy_id = dom.getAttribute('proxy_id');
+             frpc.layer = layer.open({
+                    type: 2,
+                    area: ['700px', '500px'],
+                    fixed: false,
+                    title:'配置客户端代理',
+                    content: '/frpc/static/proxy.html?mode=detail&client_id=' + client_id + '&proxy_id=' + proxy_id
+                })
+
+        },
+        button_config_update:function(name){
+           var  val = $("#config_" + name).val();
+           frpc.load = layer.load();
+           frpc.send_request('update_config_' + name,'get',{'status':val},(res)=>{
+               layer.close(frpc.load);
+               if(res.code!=0) layer.msg(res.msg,{icon:5});
+               frpc.show_page_config();
+           })
+        },
+        // 刷新当前的frpc 的服务端信息列表
+        refresh_client_list:function(){
+            frpc.send_request('get_frpc_client','get',{},(res)=>{
+                var html = "";
+                var id= 1;
+                frpc.clients = res.data;
+                res.data.forEach((client)=>{
+                     html = html + '<tr><td>' +id + '</td><td>' +  client['name'] + '</td><td>' + frpc.find_config_list("server_addr",client['config'])
+                     + '</td><td>'  + frpc.find_config_list("server_port",client['config']) + '</td><td>'
+                     + frpc.format_switch_button(client['client_id'],'client_auto_run',client['auto_run'] )+ '</td><td>'
+                     + frpc.format_process_status(client['is_running']) + '-' + frpc.format_connect_status(client['is_connect']) +  '</td><td>'
+                     + '<a href="javascript:;" onclick="frpc.button_detail_client('+client['client_id']+')" class="btlink" style="margin-right: 8px">配置</a>'
+                     + '<a href="javascript:;" onclick="frpc.button_show_log('+client['client_id']+')" class="btlink" style="margin-right: 8px">日志</a>'
+                     + '<a href="javascript:;" onclick="frpc.button_delete_client('+client['client_id']+')" class="btlink" style="margin-right: 8px">删除</a>'
+                     + '</td></tr>';
+                     id = id + 1;
+                })
+                $("#frpc_clients_table").html(html)
+                res.data.forEach((client)=>{
+
+                     var auto_run =  (client['auto_run']== 'start') ? true : false;
+                     var client_id = client['client_id'];
+                     $('#client_auto_run_' + client_id).val(client['auto_run']);
+                     if(auto_run) $('#client_auto_run_' + client_id).attr('checked','checked');
+                     else $('#client_auto_run_' + client_id).removeAttr('checked')
+                })
+                $("[name='client_auto_run']").click((e)=>{
+                    var obj = e.target;
+                    var client_id = obj.getAttribute('client_id');
+                    frpc.load = layer.load();
+                    var auto_run;
+                    if($('#client_auto_run_' + client_id).val()=='start') auto_run = 'stop';
+                    else auto_run = 'start';
+                    frpc.send_request('update_frpc_client','post',{"client_id":client_id,'auto_run':auto_run},(res)=>{
+                        $('#client_auto_run_' + client_id).val(auto_run);
+                        if(auto_run=='start') $('#client_auto_run_' + client_id).attr('checked','checked');
+                        else $('#client_auto_run_' + client_id).removeAttr('checked');
+                        layer.close(frpc.load);
+                        frpc.refresh_client_list();
+                    })
+                })
+            })
+        },
+        // 刷新 客户端代理信息列表
+        refresh_proxy_list:function(){
+            frpc.send_request('get_frpc_proxy_list','get',{'client_id':frpc.proxy_client_id},(res)=>{
+                var html = ''; var id = 1;
+                res.data.forEach((item)=>{
+                    html = html + '<tr><td>' + id + '</td><td>' + item.name + '</td><td>'  + item.proxy_type + '</td><td>'
+                    + this.find_config_list('local_ip',item.config) + '</td><td>'  +  this.find_config_list('local_port',item.config) + '</td><td>'
+                    + ( this.find_config_list('remote_port',item.config) ? this.find_config_list('remote_port',item.config) : '-' ) + '</td><td>'
+                    + '<a  proxy_id="'+item.proxy_id+'" client_id="'+frpc.proxy_client_id+'" onclick="frpc.button_delete_proxy(this)" href="javascript:;" class="btlink">删除</a>'
+                    + '<a proxy_id="'+item.proxy_id+'" client_id="'+frpc.proxy_client_id+'" onclick="frpc.button_detail_proxy(this)" href="javascript:;" class="btlink" style="margin-left: 16px">详情</a>' + '</td></tr>';
+                 })
+                $('#table_proxy_list').html(html);
+            })
+        },
+        check_install_status:function(task_id){
+            frpc.send_request('get_task_status','get',{'id':task_id},(res)=> {
+                if (res.data.status == 1) {
+                    layer.close(frpc.loading);
+                    layer.msg('切换版本[' + res.data.other + ']成功!', {icon: 1, time: 1500});
+                    frpc.refresh_client_list();
+                } else setTimeout(() => {
+                    frpc.check_install_status(task_id);
+                }, 2000);
+            });
+        },
+        find_config_list:function(name,list){
+           for(var i=0;i<list.length;i++){
+               var item = list[i];
+               if(item['name'] == name) return item['value'];
+           }
+            return null
+        },
+        format_process_status:function(status){
+            var process_status =  status ? ['运行中','green'] :['已停止','red'] ;
+            return '<span style="color:'+process_status[1]+'">' + process_status[0] + '</span>';
+        },
+        format_connect_status:function (status){
+            var client_connect = [];
+              switch (status){
+                 case 1:  client_connect = ['已连接','green'];     break;
+                 case 0:  client_connect = ['连接中','orange'];    break;
+                 case -1: client_connect = ['鉴权失败','red'];     break;
+                 case -2: client_connect = ['未连接','red'];       break;
+            }
+             return '<span style="color:'+client_connect[1]+'">' + client_connect[0] + '</span>';
+        },
+        format_switch_button:function(client_id,name,value){
+          var id = name + '_' + client_id;
+          var auto_run = (value == 'start') ? true : false;
+
+          var html = '<div style="margin-left: 0;padding: 0;">' +
+              '<input class="btswitch btswitch-ios"   id="'+id+'" type="checkbox" value="'+auto_run+'" />' +
+              '<label name="'+name+'" class="btswitch-btn" for="'+id+'" client_id = "'+client_id+'"  style="margin-bottom: 0;" ></label>' +
+              '</div>';
+          return html;
+        },
+        send_request:function(api,type,data,success,timeout=8000,error){
+             $.ajax({
+                url:'/frpc/' + api + ".json?t=" +  Date.now(),
+                type:type,
+                data:data,
+                timeout:timeout,
+                success:(res)=>{success(res)},
+                error:(err)=>{
+                    if(error) error(err);
+                    else layer.msg('请求接口[' + api + ']出错',{icon:5,timeout:1500});
+                }
+            })
+        }
+    }
+
+    // 第一次打开窗口时调用
+    frpc.switch_page('index')
+
+    // 每5s 刷新一次frpc 的客户端运行状态信息列表
+    window.frpc.interval = setInterval(()=>{
+       try{frpc.refresh_client_list();}
+       catch (e) {clearInterval(window.frpc.interval);}
+    },5000);
+
+
+</script>
